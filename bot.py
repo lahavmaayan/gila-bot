@@ -3,7 +3,7 @@ import os
 import psycopg2
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram.ext import CommandHandler
-from SQL_QUERIES import INSERT_DEFAULT_LAST_QUESTION, GET_QUESTION_BY_CHAT_ID
+from SQL_QUERIES import INSERT_DEFAULT_LAST_QUESTION, GET_QUESTION_BY_CHAT_ID, UPDATE_LAST_QUESTION, INSERT_ANSWER
 
 FIRST_QUESTION = """
 Hello there,  my name is Gila! I'm your bot :)
@@ -26,6 +26,7 @@ dispatcher = updater.dispatcher
 def start(update, context):
     conn, cur = create_connection()
     chat_id = update.effective_chat.id
+
     sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=chat_id)
     cur.execute(sql_query)
     conn.commit()
@@ -35,32 +36,54 @@ def start(update, context):
 
 
 def conversation(update, context):
-    con, cur = create_connection()
-    try:
-        chat_id = update.effective_chat.id
-        response = _parse_response(update.message.text)
+    conn, cur = create_connection()
+    chat_id = update.effective_chat.id
+    user_response = send_next_question(chat_id, cur, update)
 
-        # Get next question
+    update_db(chat_id, conn, cur, user_response)
 
-        # Verify not the last question
-
-        # Update in the DB
+    close_connection(conn, cur)
 
 
+def update_db(chat_id, conn, cur, user_response):
+    # This function insert the user's answers + update the last question id in the state.
+    for res in user_response:
+        update_query = INSERT_ANSWER.format(CHAT_ID=chat_id, ANSWER_DISPLAY_ID=int(res.strip()))
+        cur.execute(update_query)
+    query = UPDATE_LAST_QUESTION.format(CHAT_ID=chat_id)
+    cur.execute(query)
+    conn.commit()
 
-        select_query = GET_QUESTION_BY_CHAT_ID.format(CHAT_ID=chat_id)
-        question = cur.fetchone()[0]
 
-    except:
-        update.message.reply_text(f"An error occurred, sorry")
-    finally:
-        close_connection(con, cur)
+def send_next_question(chat_id, cur, update):
+    # This function send the parsed response
 
-    update.message.reply_text(f"This was the reply: {update.message.text}, {chat_id}")
+    user_response = _parse_response(update.message.text)
+    # TODO: handle last question
+    select_query = GET_QUESTION_BY_CHAT_ID.format(CHAT_ID=chat_id)
+    cur.execute(select_query)
+    results = cur.fetchall()
+    answers = []
+    question = None
+    for row in results:
+        if question is None:
+            question = row[0]
+        answers.append(row[1])
+
+    response = _prepare_response(question, answers)
+    update.message.reply_text(response)
+    return user_response
 
 
 def _parse_response(message):
     return message.split(",")
+
+
+def _prepare_response(question, answers):
+    response = f"{question}\n"
+    for index, answer in enumerate(answers):
+        response += f"{index+1}. {answer}"
+    return response
 
 
 def create_connection():

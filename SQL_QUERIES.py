@@ -1,5 +1,8 @@
 GET_QUESTION_BY_CHAT_ID = """
-SELECT question FROM public.questions where id = (SELECT last_question_id+1 from public.state where chat_id = {CHAT_ID})
+SELECT question, a.answer, a.display_id FROM public.questions q
+join answers a on q.id = a.question_id
+where q.id = (SELECT last_question_id+1 from public.state where chat_id = {CHAT_ID})
+order by a.display_id
 """
 
 UPDATE_LAST_QUESTION = """
@@ -10,6 +13,12 @@ WHERE chat_id = {CHAT_ID}
 INSERT_DEFAULT_LAST_QUESTION = "INSERT INTO public.state (chat_id, last_question_id) VALUES ({CHAT_ID}, 1)"
 
 INSERT_ANSWER = """
-INSERT INTO public.users_answers (chat_id, question_id, answer_id) VALUES ({CHAT_ID}, {QUESTION_ID}, 
-(SELECT answer_id from public.answers WHERE question_id = {QUESTION_ID} and display_id = {USER_ANSWER})
+INSERT INTO public.users_answers (chat_id, question_id, answer_id)
+VALUES
+       ({CHAT_ID},
+        (select last_question_id from public.state where state.chat_id = {CHAT_ID}),
+       (SELECT answer_id from public.answers WHERE question_id = (select last_question_id from public.state where state.chat_id = {CHAT_ID})
+       and display_id = {ANSWER_DISPLAY_ID}));
 """
+
+
