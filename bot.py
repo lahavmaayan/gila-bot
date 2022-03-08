@@ -26,16 +26,13 @@ dispatcher = updater.dispatcher
 
 
 def start(update, context):
-    con, cur = create_connection()
+    conn, cur = create_connection()
     chat_id = update.effective_chat.id
-    try:
-        # insert into first last question
-        sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=chat_id)
-        cur.execute(sql_query)
-    except Exception as e:
-        context.bot.send_message(chat_id=chat_id, text=e.message)
-    finally:
-        close_connection(con, cur)
+    # insert into first last question
+    sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=chat_id)
+    context.bot.send_message(chat_id=chat_id, text=sql_query)
+    cur.execute(sql_query)
+    close_connection(conn, cur)
 
     context.bot.send_message(chat_id=chat_id, text=FIRST_QUESTION)
 
@@ -70,14 +67,14 @@ def _parse_response(message):
 
 
 def create_connection():
-    con = psycopg2.connect(DATABASE_URL, sslmode='require')
-    cur = con.cursor()
-    return con, cur
+    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+    cur = conn.cursor()
+    return conn, cur
 
 
-def close_connection(con, cur):
+def close_connection(conn, cur):
     cur.close()
-    con.close()
+    conn.close()
 
 
 
