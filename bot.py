@@ -82,7 +82,7 @@ def _parse_response(message):
 def _prepare_response(question, answers):
     response = f"{question}\n"
     for index, answer in enumerate(answers):
-        response += f"{index+1}. {answer}"
+        response += f"{index+1}. {answer}\n"
     return response
 
 
