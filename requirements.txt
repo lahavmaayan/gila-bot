@@ -2,3 +2,5 @@ requests
 flask
 python-telegram-bot
 telegram
+psycopg2-binary
+telethon
