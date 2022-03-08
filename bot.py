@@ -57,7 +57,7 @@ def _save_name_handler(context, chat_id, parsed_user_response, cur):
     update_name = UPDATE_USER_NAME.format(NAME=parsed_user_response[0], CHAT_ID=chat_id)
     cur.execute(update_name)
 
-    context.bot.send_message(chat_id=chat_id, text=f"Nice to meet you {parsed_user_response}! :)")
+    context.bot.send_message(chat_id=chat_id, text=f"Nice to meet you {parsed_user_response[0]}! :)")
 
 
 def _get_last_question_id(chat_id, cur):
@@ -77,7 +77,6 @@ def update_db(chat_id, conn, cur, user_response, context, should_skip_insert_ans
     if not should_skip_insert_answer:
         for res in user_response:
             update_query = INSERT_ANSWER.format(CHAT_ID=chat_id, ANSWER_DISPLAY_ID=int(res.strip()))
-            context.bot.send_message(chat_id=chat_id, text=update_query)
             cur.execute(update_query)
 
     query = UPDATE_LAST_QUESTION.format(CHAT_ID=chat_id)
