@@ -28,10 +28,12 @@ dispatcher = updater.dispatcher
 # set up the introductory statement for the bot when the /start command is invoked
 def start(update, context):
     con, cur = create_connection()
+    chat_id = update.effective_chat.id
+    context.bot.send_message(chat_id=chat_id, text=f"this is the chat_id {chat_id}, {type(chat_id)}")
     try:
         chat_id = update.effective_chat.id
         # insert into first last question
-        sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=chat_id)
+        sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=int(chat_id))
 
         cur.execute(sql_query)
         context.bot.send_message(chat_id=chat_id, text=FIRST_QUESTION)
