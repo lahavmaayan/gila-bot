@@ -15,7 +15,8 @@ dispatcher = updater.dispatcher
 def start(update, context):
     chat_id = update.effective_chat.id
     # TODO: change the text
-    context.bot.send_message(chat_id=chat_id, text="Hello there. My name is Gila, please...")
+    context.bot.send_message(chat_id=chat_id, text="Hello there. Provide any English word and I will give you a bunch "
+                                                   "of information about it.")
 
 
 # obtain the information of the word provided and format before presenting.
@@ -25,17 +26,13 @@ def get_word_info(update, context):
     update.message.reply_text(message)
 
 # run the start function when the user invokes the /start command
+# run the start function when the user invokes the /start command
 dispatcher.add_handler(CommandHandler("start", start))
 
 # invoke the get_word_info function when the user sends a message
 # that is not a command.
 dispatcher.add_handler(MessageHandler(Filters.text, get_word_info))
-
-
 updater.start_webhook(listen="0.0.0.0",
                       port=int(os.environ.get('PORT', 5000)),
                       url_path=telegram_bot_token,
-                      webhook_url="https://gila-the-bot.herokuapp.com/" + telegram_bot_token
-                      )
-
-updater.start_polling()
+                      webhook_url='https://gila-the-bot.herokuapp.com/' + telegram_bot_token)
