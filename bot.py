@@ -25,14 +25,15 @@ updater = Updater(token=telegram_bot_token, use_context=True)
 dispatcher = updater.dispatcher
 
 
-# set up the introductory statement for the bot when the /start command is invoked
 def start(update, context):
     con, cur = create_connection()
     chat_id = update.effective_chat.id
     try:
         # insert into first last question
-        sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=int(chat_id))
+        sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=chat_id)
         cur.execute(sql_query)
+    except Exception as e:
+        context.bot.send_message(chat_id=chat_id, text=e.message)
     finally:
         close_connection(con, cur)
 
