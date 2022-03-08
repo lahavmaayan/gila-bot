@@ -21,4 +21,5 @@ VALUES
        and display_id = {ANSWER_DISPLAY_ID}));
 """
 
+GET_LAST_QUESTION_ID = "select last_question_id from public.state where chat_id = {CHAT_ID}"
 

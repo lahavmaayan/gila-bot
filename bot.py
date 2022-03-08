@@ -3,21 +3,18 @@ import os
 import psycopg2
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram.ext import CommandHandler
-from SQL_QUERIES import INSERT_DEFAULT_LAST_QUESTION, GET_QUESTION_BY_CHAT_ID, UPDATE_LAST_QUESTION, INSERT_ANSWER
+from SQL_QUERIES import INSERT_DEFAULT_LAST_QUESTION, GET_QUESTION_BY_CHAT_ID, UPDATE_LAST_QUESTION, INSERT_ANSWER, \
+    GET_LAST_QUESTION_ID
 
 FIRST_QUESTION = """
 Hello there,  my name is Gila! I'm your bot :)
 How are you doing today?
-Please choose the number corresponding to your response: 
-1. Great
-2. Fine
-3. So so
-4. Not very well
-5. Horrible
 """
 
 DATABASE_URL = os.environ['DATABASE_URL']
 telegram_bot_token = "5235401334:AAFC3AOzKzR_pK6dPHLRMQhkGOwi8YLbWm0"
+
+LAST_QUESTION_ID = 7
 
 updater = Updater(token=telegram_bot_token, use_context=True)
 dispatcher = updater.dispatcher
@@ -38,10 +35,26 @@ def start(update, context):
 def conversation(update, context):
     conn, cur = create_connection()
     chat_id = update.effective_chat.id
+
+    if _is_last_question(chat_id, cur):
+        return handle_matching(chat_id, conn, cur, update)
+
     user_response = send_next_question(chat_id, cur, update)
 
     update_db(chat_id, conn, cur, user_response)
 
+    close_connection(conn, cur)
+
+
+def _is_last_question(chat_id, cur):
+    last_question_id = GET_LAST_QUESTION_ID.format(CHAT_ID=chat_id)
+    cur.execute(last_question_id)
+    res = cur.fetchone()[0]
+    return res == LAST_QUESTION_ID
+
+
+def handle_matching(chat_id, conn, cur, update):
+    update.message.reply_text("Matching!")
     close_connection(conn, cur)
 
 
@@ -81,6 +94,8 @@ def _parse_response(message):
 
 def _prepare_response(question, answers):
     response = f"{question}\n"
+    response += "Please write down the number corresponding to your answer. If you pick 2 or more - write your " \
+                "answers like this: 1,2,3\n "
     for index, answer in enumerate(answers):
         response += f"{index+1}. {answer}\n"
     return response
