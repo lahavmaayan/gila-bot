@@ -26,14 +26,9 @@ dispatcher = updater.dispatcher
 def start(update, context):
     conn, cur = create_connection()
     chat_id = update.effective_chat.id
-    # insert into first last question
-    # sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=chat_id)
-    select_query = f"SELECT question FROM public.questions where id = (SELECT last_question_id+1 from public.state where chat_id = {chat_id})"
-    context.bot.send_message(chat_id=chat_id, text=select_query)
-    cur.execute(select_query)
-    res = cur.fetchone()[0]
-    context.bot.send_message(chat_id=chat_id, text=res)
-
+    sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=chat_id)
+    cur.execute(sql_query)
+    conn.commit()
     close_connection(conn, cur)
 
     context.bot.send_message(chat_id=chat_id, text=FIRST_QUESTION)
