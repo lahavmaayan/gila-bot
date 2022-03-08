@@ -20,11 +20,13 @@ def start(update, context):
 
 # obtain the information of the word provided and format before presenting.
 def get_word_info(update, context):
+    chat_id = update.effective_chat.id
+
     message = f"Word: hello\n\nOrigin: Gila\n"
 
-    update.message.reply_text(message)
+    update.message.reply_text(f"This was the reply: {update.message.text}")
 
-# run the start function when the user invokes the /start command
+
 # run the start function when the user invokes the /start command
 dispatcher.add_handler(CommandHandler("start", start))
 
