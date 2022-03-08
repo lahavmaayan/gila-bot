@@ -23,7 +23,7 @@ def start(update, context):
     chat_id = update.effective_chat.id
     # TODO: change the text
     # context.bot.send_message(chat_id=chat_id, text="Hello there. My name is Gila! I'm your bot :)")
-    context.send_message(
+    context.bot.send_message(
         update.chat_id,
         file=types.InputMediaPoll(
             poll=types.Poll(
