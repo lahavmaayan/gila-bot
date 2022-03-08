@@ -23,5 +23,5 @@ VALUES
 
 GET_LAST_QUESTION_ID = "SELECT last_question_id FROM public.state where chat_id = {CHAT_ID}"
 
-UPDATE_USER_NAME = "UPDATE public.state set name = {NAME} where chat_id = {CHAT_ID}"
+UPDATE_USER_NAME = "UPDATE public.state SET name = '{NAME}' WHERE chat_id = {CHAT_ID}"
 
