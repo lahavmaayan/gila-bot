@@ -1,17 +1,24 @@
 import os
 
+import psycopg2
 import telegram
 from telethon import types
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram.ext import CommandHandler
+from SQL_QUERIES import INSERT_DEFAULT_LAST_QUESTION, GET_QUESTION_BY_CHAT_ID
 
-# QUESTIONS = ["First", "second", "third"]
-# LAST_QUESTION = None
-
-selected = []
+FIRST_QUESTION = """
+Hello there,  my name is Gila! I'm your bot :)
+How are you doing today?
+Please choose the number corresponding to your response: 
+1. Great
+2. Fine
+3. So so
+4. Not very well
+5. Horrible
+"""
 
 DATABASE_URL = os.environ['DATABASE_URL']
-
 telegram_bot_token = "5235401334:AAFC3AOzKzR_pK6dPHLRMQhkGOwi8YLbWm0"
 
 updater = Updater(token=telegram_bot_token, use_context=True)
@@ -20,35 +27,54 @@ dispatcher = updater.dispatcher
 
 # set up the introductory statement for the bot when the /start command is invoked
 def start(update, context):
-    chat_id = update.effective_chat.id
-    # TODO: change the text
-    # context.bot.send_message(chat_id=chat_id, text="Hello there. My name is Gila! I'm your bot :)")
-    context.bot.send_message(
-        chat_id,
-        file=types.InputMediaPoll(
-            poll=types.Poll(
-                id=1,
-                question="This is a test poll",
-                answers=[types.PollAnswer('Option 1', b'1'), types.PollAnswer('Option 2', b'2'), types.PollAnswer('Option 3', b'3')],
-                multiple_choice=True
-            )))
+    con, cur = create_connection()
+    try:
+        chat_id = update.effective_chat.id
+        # insert into first last question
+        sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=chat_id)
 
-# def _fetch_question():
-#     if LAST_QUESTION is None:
-#         LAST_QUESTION = 0
-#         return
+        cur.execute(sql_query)
+        context.bot.send_message(chat_id=chat_id, text=FIRST_QUESTION)
+    finally:
+        close_connection(con, cur)
 
 
-# obtain the information of the word provided and format before presenting.
-def get_word_info(update, context):
-    chat_id = update.effective_chat.id
-    # current_question = QUESTIONS[0]
+def conversation(update, context):
+    con, cur = create_connection()
+    try:
+        chat_id = update.effective_chat.id
+        select_query = GET_QUESTION_BY_CHAT_ID.format(CHAT_ID=chat_id)
 
-    message = f"Word: hello\n\nOrigin: Gila\n"
-    global selected
-    selected += {update.message.text}
+        try:
+            cur.execute(select_query)
+            question = cur.fetchone()[0]
+        finally:
+            cur.close()
+            update.message.reply_text(f"An error occurred, sorry")
+
+        response = _parse_response(update.message.text)
+    finally:
+        close_connection(con, cur)
 
     update.message.reply_text(f"This was the reply: {update.message.text}, {chat_id}")
+
+
+def _parse_response(message):
+    if "," in message:
+        return message.split(",")
+    else:
+        return int(message.strip())
+
+
+def create_connection():
+    con = psycopg2.connect(DATABASE_URL, sslmode='require')
+    cur = con.cursor()
+    return con, cur
+
+
+def close_connection(con, cur):
+    cur.close()
+    con.close()
 
 
 
@@ -58,7 +84,7 @@ dispatcher.add_handler(CommandHandler("start", start))
 
 # invoke the get_word_info function when the user sends a message
 # that is not a command.
-dispatcher.add_handler(MessageHandler(Filters.text, get_word_info))
+dispatcher.add_handler(MessageHandler(Filters.text, conversation))
 updater.start_webhook(listen="0.0.0.0",
                       port=int(os.environ.get('PORT', 5000)),
                       url_path=telegram_bot_token,
