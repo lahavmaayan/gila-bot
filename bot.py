@@ -18,9 +18,12 @@ Dalya, phone number: +972 54-000-1905.
 Feel free to contact her and share your journey.
 """
 
-METCHING_TEXT = "Thanks for answering all the questions {NAME}!" \
-                "Let's find you a match who have experience those symptoms too." \
-                "You'll be able to chat and share your experience!"
+MATCHING_TEXT = """
+Thanks for answering all the questions {NAME}!
+Let's find you a match who have experience those symptoms too.
+You'll be able to chat and share your experience!
+"""
+
 DATABASE_URL = os.environ['DATABASE_URL']
 telegram_bot_token = "5235401334:AAFC3AOzKzR_pK6dPHLRMQhkGOwi8YLbWm0"
 
@@ -81,7 +84,7 @@ def handle_matching(chat_id, cur, update, context):
     user_name_query = GET_USER_NAME.format(CHAT_ID=chat_id)
     cur.execute(user_name_query)
     name = cur.fetchone()[0]
-    context.bot.send_message(chat_id=chat_id, text=METCHING_TEXT.format(name))
+    context.bot.send_message(chat_id=chat_id, text=MATCHING_TEXT.format(NAME=name))
     update.message.reply_text(FOUND_MATCH)
 
 
