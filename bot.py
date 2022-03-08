@@ -4,18 +4,27 @@ import psycopg2
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram.ext import CommandHandler
 from SQL_QUERIES import INSERT_DEFAULT_LAST_QUESTION, GET_QUESTION_BY_CHAT_ID, UPDATE_LAST_QUESTION, INSERT_ANSWER, \
-    GET_LAST_QUESTION_ID, UPDATE_USER_NAME
+    GET_LAST_QUESTION_ID, UPDATE_USER_NAME, GET_USER_NAME
 
 FIRST_QUESTION = """
 Hello there, my name is Gila, I’m your Bot-pal in these uncertain times of menopausal and peri menopausal phases.
 Unsure what you’re going through? I’m here for you
-Before we start, please tell me your name :)
+Before we start, please tell me your name :) \n \n
 """
 
+FOUND_MATCH = """
+I found a match for you!! 
+Dalya, phone number: +972 54-587-8985. 
+Feel free to contact her and share your journey.
+"""
+
+METCHING_TEXT = "Thanks for answering all the questions {NAME}!" \
+                "Let's find you a match who have experience those symptoms too." \
+                "You'll be able to chat and share your experience!"
 DATABASE_URL = os.environ['DATABASE_URL']
 telegram_bot_token = "5235401334:AAFC3AOzKzR_pK6dPHLRMQhkGOwi8YLbWm0"
 
-LAST_QUESTION_ID = 7
+LAST_QUESTION_ID = 6
 
 updater = Updater(token=telegram_bot_token, use_context=True)
 dispatcher = updater.dispatcher
@@ -43,12 +52,13 @@ def conversation(update, context):
     if last_question == 0:
         _save_name_handler(context, chat_id, parsed_user_response, cur)
         should_skip_insert_answer = True
-    if last_question == LAST_QUESTION_ID:
-        return handle_matching(chat_id, conn, cur, update)
 
-    send_next_question(chat_id, cur, update)
+    if not last_question == LAST_QUESTION_ID:
+        send_next_question(chat_id, cur, update)
+        update_db(chat_id, conn, cur, parsed_user_response, context, should_skip_insert_answer)
 
-    update_db(chat_id, conn, cur, parsed_user_response, context, should_skip_insert_answer)
+    else:
+        handle_matching(chat_id, cur, update, context)
 
     close_connection(conn, cur)
 
@@ -67,9 +77,12 @@ def _get_last_question_id(chat_id, cur):
     return res
 
 
-def handle_matching(chat_id, conn, cur, update):
-    update.message.reply_text("Matching!")
-    close_connection(conn, cur)
+def handle_matching(chat_id, cur, update, context):
+    user_name_query = GET_USER_NAME.format(CHAT_ID=chat_id)
+    cur.execute(user_name_query)
+    name = cur.fetchone()[0]
+    context.bot.send_message(chat_id=chat_id, text=METCHING_TEXT.format(name))
+    update.message.reply_text(FOUND_MATCH)
 
 
 def update_db(chat_id, conn, cur, user_response, context, should_skip_insert_answer):
