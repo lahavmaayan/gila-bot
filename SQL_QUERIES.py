@@ -17,7 +17,7 @@ INSERT INTO public.users_answers (chat_id, question_id, answer_id)
 VALUES
        ({CHAT_ID},
         (select last_question_id from public.state where state.chat_id = {CHAT_ID}),
-       (SELECT answer_id from public.answers WHERE question_id = (select last_question_id from public.state where state.chat_id = {CHAT_ID})
+       (SELECT id from public.answers WHERE question_id = (select last_question_id from public.state where state.chat_id = {CHAT_ID})
        and display_id = {ANSWER_DISPLAY_ID}));
 """
 
