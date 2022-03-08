@@ -33,7 +33,9 @@ def start(update, context):
     try:
         chat_id = update.effective_chat.id
         # insert into first last question
-        sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=int(chat_id))
+        # sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=int(chat_id))
+        sql_query = f"INSERT INTO public.state (chat_id, last_question_id) VALUES ({chat_id}, 1)"
+        context.bot.send_message(chat_id=chat_id, text=sql_query)
 
         cur.execute(sql_query)
         context.bot.send_message(chat_id=chat_id, text=FIRST_QUESTION)

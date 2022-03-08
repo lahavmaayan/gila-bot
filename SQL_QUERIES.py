@@ -7,9 +7,7 @@ UPDATE public.state set last_question_id = (SELECT last_question_id+1 from publi
 WHERE chat_id = {CHAT_ID}
 """
 
-INSERT_DEFAULT_LAST_QUESTION = """
-INSERT INTO public.state (chat_id, last_question_id) VALUES ({CHAT_ID}, 1)
-"""
+INSERT_DEFAULT_LAST_QUESTION = "INSERT INTO public.state (chat_id, last_question_id) VALUES ({CHAT_ID}, 1)"
 
 INSERT_ANSWER = """
 INSERT INTO public.users_answers (chat_id, question_id, answer_id) VALUES ({CHAT_ID}, {QUESTION_ID}, 
