@@ -8,8 +8,8 @@ from SQL_QUERIES import INSERT_DEFAULT_LAST_QUESTION, GET_QUESTION_BY_CHAT_ID, U
 
 FIRST_QUESTION = """
 Hello there, my name is Gila, I’m your Bot-pal in these uncertain times of menopausal and peri menopausal phases.
-Unsure what you’re going through? I’m here for you
-Before we start, please tell me your name :) \n \n
+Unsure what you’re going through? I’m here for you ❤️ \n
+Before we start, please tell me your name :) \n 
 """
 
 FOUND_MATCH = """
