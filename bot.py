@@ -41,7 +41,7 @@ def conversation(update, context):
 
     user_response = send_next_question(chat_id, cur, update)
 
-    update_db(chat_id, conn, cur, user_response)
+    update_db(chat_id, conn, cur, user_response, context)
 
     close_connection(conn, cur)
 
@@ -58,10 +58,11 @@ def handle_matching(chat_id, conn, cur, update):
     close_connection(conn, cur)
 
 
-def update_db(chat_id, conn, cur, user_response):
+def update_db(chat_id, conn, cur, user_response, context):
     # This function insert the user's answers + update the last question id in the state.
     for res in user_response:
         update_query = INSERT_ANSWER.format(CHAT_ID=chat_id, ANSWER_DISPLAY_ID=int(res.strip()))
+        context.bot.send_message(chat_id=chat_id, text=update_query)
         cur.execute(update_query)
     query = UPDATE_LAST_QUESTION.format(CHAT_ID=chat_id)
     cur.execute(query)
