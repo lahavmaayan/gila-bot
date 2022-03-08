@@ -54,7 +54,7 @@ def conversation(update, context):
 
 
 def _save_name_handler(context, chat_id, parsed_user_response, cur):
-    update_name = UPDATE_USER_NAME.format(NAME=parsed_user_response, CHAT_ID=chat_id)
+    update_name = UPDATE_USER_NAME.format(NAME=parsed_user_response[0], CHAT_ID=chat_id)
     cur.execute(update_name)
 
     context.bot.send_message(chat_id=chat_id, text=f"Nice to meet you {parsed_user_response}! :)")
