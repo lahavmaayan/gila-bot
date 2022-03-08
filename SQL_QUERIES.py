@@ -10,7 +10,7 @@ UPDATE public.state set last_question_id = (SELECT last_question_id+1 from publi
 WHERE chat_id = {CHAT_ID}
 """
 
-INSERT_DEFAULT_LAST_QUESTION = "INSERT INTO public.state (chat_id, last_question_id) VALUES ({CHAT_ID}, 1)"
+INSERT_DEFAULT_LAST_QUESTION = "INSERT INTO public.state (chat_id, last_question_id) VALUES ({CHAT_ID}, 0)"
 
 INSERT_ANSWER = """
 INSERT INTO public.users_answers (chat_id, question_id, answer_id)
@@ -21,5 +21,5 @@ VALUES
        and display_id = {ANSWER_DISPLAY_ID}));
 """
 
-GET_LAST_QUESTION_ID = "select last_question_id from public.state where chat_id = {CHAT_ID}"
+GET_LAST_QUESTION_ID = "SELECT last_question_id FROM public.state where chat_id = {CHAT_ID}"
 
