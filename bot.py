@@ -24,7 +24,7 @@ def get_word_info(update, context):
 
     message = f"Word: hello\n\nOrigin: Gila\n"
 
-    update.message.reply_text(f"This was the reply: {update.message.text}")
+    update.message.reply_text(f"This was the reply: {update.message.text}, {chat_id}")
 
 
 # run the start function when the user invokes the /start command
