@@ -4,11 +4,12 @@ import psycopg2
 from telegram.ext import Updater, MessageHandler, Filters
 from telegram.ext import CommandHandler
 from SQL_QUERIES import INSERT_DEFAULT_LAST_QUESTION, GET_QUESTION_BY_CHAT_ID, UPDATE_LAST_QUESTION, INSERT_ANSWER, \
-    GET_LAST_QUESTION_ID
+    GET_LAST_QUESTION_ID, UPDATE_USER_NAME
 
 FIRST_QUESTION = """
-Hello there,  my name is Gila! I'm your bot :)
-How are you doing today?
+Hello there, my name is Gila, I’m your Bot-pal in these uncertain times of menopausal and peri menopausal phases.
+Unsure what you’re going through? I’m here for you
+Before we start, please tell me your name :)
 """
 
 DATABASE_URL = os.environ['DATABASE_URL']
@@ -35,22 +36,35 @@ def start(update, context):
 def conversation(update, context):
     conn, cur = create_connection()
     chat_id = update.effective_chat.id
+    parsed_user_response = _parse_response(update.message.text)
 
-    if _is_last_question(chat_id, cur):
+    last_question = _get_last_question_id(chat_id, cur)
+    should_skip_insert_answer = False
+    if last_question == 0:
+        _save_name_handler(context, chat_id, parsed_user_response, cur)
+        should_skip_insert_answer = True
+    if last_question == LAST_QUESTION_ID:
         return handle_matching(chat_id, conn, cur, update)
 
-    user_response = send_next_question(chat_id, cur, update)
+    send_next_question(chat_id, cur, update)
 
-    update_db(chat_id, conn, cur, user_response, context)
+    update_db(chat_id, conn, cur, parsed_user_response, context, should_skip_insert_answer)
 
     close_connection(conn, cur)
 
 
-def _is_last_question(chat_id, cur):
+def _save_name_handler(context, chat_id, parsed_user_response, cur):
+    update_name = UPDATE_USER_NAME.format(NAME=parsed_user_response, CHAT_ID=chat_id)
+    cur.execute(update_name)
+
+    context.bot.send_message(chat_id=chat_id, text=f"Nice to meet you {parsed_user_response}! :)")
+
+
+def _get_last_question_id(chat_id, cur):
     last_question_id = GET_LAST_QUESTION_ID.format(CHAT_ID=chat_id)
     cur.execute(last_question_id)
     res = cur.fetchone()[0]
-    return res == LAST_QUESTION_ID
+    return res
 
 
 def handle_matching(chat_id, conn, cur, update):
@@ -58,12 +72,14 @@ def handle_matching(chat_id, conn, cur, update):
     close_connection(conn, cur)
 
 
-def update_db(chat_id, conn, cur, user_response, context):
+def update_db(chat_id, conn, cur, user_response, context, should_skip_insert_answer):
     # This function insert the user's answers + update the last question id in the state.
-    for res in user_response:
-        update_query = INSERT_ANSWER.format(CHAT_ID=chat_id, ANSWER_DISPLAY_ID=int(res.strip()))
-        context.bot.send_message(chat_id=chat_id, text=update_query)
-        cur.execute(update_query)
+    if not should_skip_insert_answer:
+        for res in user_response:
+            update_query = INSERT_ANSWER.format(CHAT_ID=chat_id, ANSWER_DISPLAY_ID=int(res.strip()))
+            context.bot.send_message(chat_id=chat_id, text=update_query)
+            cur.execute(update_query)
+
     query = UPDATE_LAST_QUESTION.format(CHAT_ID=chat_id)
     cur.execute(query)
     conn.commit()
@@ -72,8 +88,6 @@ def update_db(chat_id, conn, cur, user_response, context):
 def send_next_question(chat_id, cur, update):
     # This function send the parsed response
 
-    user_response = _parse_response(update.message.text)
-    # TODO: handle last question
     select_query = GET_QUESTION_BY_CHAT_ID.format(CHAT_ID=chat_id)
     cur.execute(select_query)
     results = cur.fetchall()
@@ -86,7 +100,6 @@ def send_next_question(chat_id, cur, update):
 
     response = _prepare_response(question, answers)
     update.message.reply_text(response)
-    return user_response
 
 
 def _parse_response(message):
@@ -95,10 +108,10 @@ def _parse_response(message):
 
 def _prepare_response(question, answers):
     response = f"{question}\n"
-    response += "Please write down the number corresponding to your answer. If you pick 2 or more - write your " \
-                "answers like this: 1,2,3\n "
     for index, answer in enumerate(answers):
         response += f"{index+1}. {answer}\n"
+    response += "\nPlease write down the number corresponding to your answer. If you pick 2 or more - write your " \
+                "answers like this: 1,2,3\n "
     return response
 
 
