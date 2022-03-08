@@ -1,5 +1,5 @@
 GET_QUESTION_BY_CHAT_ID = """
-SELECT public.question FROM public.questions where id = (SELECT last_question_id+1 from public.state where chat_id = {CHAT_ID})
+SELECT question FROM public.questions where id = (SELECT last_question_id+1 from public.state where chat_id = {CHAT_ID})
 """
 
 UPDATE_LAST_QUESTION = """

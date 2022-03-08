@@ -28,13 +28,11 @@ dispatcher = updater.dispatcher
 # set up the introductory statement for the bot when the /start command is invoked
 def start(update, context):
     con, cur = create_connection()
-    chat_id = update.effective_chat.id
-    context.bot.send_message(chat_id=chat_id, text=f"this is the chat_id {chat_id}, {type(chat_id)}")
     try:
         chat_id = update.effective_chat.id
         # insert into first last question
         sql_query = INSERT_DEFAULT_LAST_QUESTION.format(CHAT_ID=int(chat_id))
-
+        context.bot.send_message(chat_id=chat_id, text=sql_query)
         cur.execute(sql_query)
         context.bot.send_message(chat_id=chat_id, text=FIRST_QUESTION)
     finally:
@@ -45,16 +43,21 @@ def conversation(update, context):
     con, cur = create_connection()
     try:
         chat_id = update.effective_chat.id
-        select_query = GET_QUESTION_BY_CHAT_ID.format(CHAT_ID=chat_id)
-
-        try:
-            cur.execute(select_query)
-            question = cur.fetchone()[0]
-        finally:
-            cur.close()
-            update.message.reply_text(f"An error occurred, sorry")
-
         response = _parse_response(update.message.text)
+
+        # Get next question
+
+        # Verify not the last question
+
+        # Update in the DB
+
+
+
+        select_query = GET_QUESTION_BY_CHAT_ID.format(CHAT_ID=chat_id)
+        question = cur.fetchone()[0]
+
+    except:
+        update.message.reply_text(f"An error occurred, sorry")
     finally:
         close_connection(con, cur)
 
@@ -62,10 +65,7 @@ def conversation(update, context):
 
 
 def _parse_response(message):
-    if "," in message:
-        return message.split(",")
-    else:
-        return int(message.strip())
+    return message.split(",")
 
 
 def create_connection():
